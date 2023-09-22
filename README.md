@@ -1,8 +1,7 @@
 # Saffron-Pictures
 
-Taking Saffron Pictures
-
-This works best with Linux
+This works best with Linux.
+You can take pictures with or without the joystick
 
 ## Setup
 ### Gantry
@@ -33,16 +32,18 @@ source .venv/bin/activate
 
 
 
-Keyboard commands for the OAKs
-G - connect to camera 1
-H - connect to camera 2
-Q - quit the program
-C - start capturing pictures
+## Keyboard commands for the OAKs
+#### Basic Camera Usage ####
+* G - connect to camera 1
+* H - connect to camera 2
+* Q - quit the program
+* C - start capturing pictures
 
-I - increase shutter speed
-O - decrease shutter speed
-K - increase ISO
-L - decrease ISO
-A - set camera to Auto adjust mode
+#### Camera Settings ####
+* I - increase shutter speed
+* O - decrease shutter speed
+* K - increase ISO
+* L - decrease ISO
+* A - set camera to Auto adjust mode
 
 
