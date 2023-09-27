@@ -5,16 +5,22 @@ You can take pictures with or without the joystick
 
 ## Setup
 
+Create a folder to clone this repository and the depthai python repository
 Create a virtual environment before running install_requirement.py, this environment will be important for some settings within the script.
 Create a folder called Pictures in your project directory. When starting a dataset you will be prompted for the name of the dataset and it will be saved within your directory in the Pictures folder.
 You'll need to clone the depthai repository to use the OAK cameras. 
 
-```
-# Create your virtual environment
-mkdir Pictures
 
+Within your project directory clone this repository
+```
+https://github.com/byu-crop-biomechanics-lab/Saffron-Pictures
+```
+Create your virtual environment within the project directory
+
+Setup depthai within your project directory
+```
 git clone https://github.com/luxonis/depthai-python
-cd depthai/utilities
+cd depthai-python/utilities
 python3 install_requirements.py
 ```
 
