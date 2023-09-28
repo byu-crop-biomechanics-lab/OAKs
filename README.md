@@ -60,12 +60,3 @@ If you have troubles connecting to the OAKs refer to this document -
 * H - connect to camera 2
 * Q - quit the program
 * C - start capturing pictures
-
-#### Camera Settings ####
-* I - increase shutter speed
-* O - decrease shutter speed
-* K - increase ISO
-* L - decrease ISO
-* A - set camera to Auto adjust mode
-
-
