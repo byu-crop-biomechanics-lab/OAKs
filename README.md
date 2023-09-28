@@ -13,7 +13,7 @@ You'll need to clone the depthai repository to use the OAK cameras.
 
 Within your project directory clone this repository
 ```
-https://github.com/byu-crop-biomechanics-lab/Saffron-Pictures
+https://github.com/byu-crop-biomechanics-lab/OAKs
 ```
 Create your virtual environment within the project directory
 
@@ -22,6 +22,7 @@ Setup depthai within your project directory
 git clone https://github.com/luxonis/depthai-python
 cd depthai-python/utilities
 python3 install_requirements.py
+pip install depthai
 ```
 
 In your computer's network settings manually change your ethernet IP address to 169.254.1.50. The 50 can be set to anything from 0 to 255, except for 221 and 222 which are the OAK cameras' IP addresses.
