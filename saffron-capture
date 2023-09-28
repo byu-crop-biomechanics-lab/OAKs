@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+
+# DEPTHAI_WATCHDOG_INITIAL_DELAY=60000 DEPTHAI_BOOTUP_TIMEOUT=60000 python3 test-1.py
+
+'''
+To Do
+
+* catch things like only having one OAK connected. try and catch and print errors or allow one camera to run by itself
+
+'''
+
+import cv2
+import depthai as dai
+import time
+import numpy as np
+import os
+
+os.environ['DEPTHAI_WATCHDOG_INITIAL_DELAY'] = '60000'
+os.environ['DEPTHAI_BOOTUP_TIMEOUT'] = '60000'
+
+
+# Create pipeline
+def create_pipeline():
+    pipeline = dai.Pipeline()
+
+    # Create nodes
+    camRgb = pipeline.create(dai.node.ColorCamera)
+    xoutVideo = pipeline.create(dai.node.XLinkOut)
+    
+    stillEncoder = pipeline.create(dai.node.VideoEncoder)
+    controlIn = pipeline.create(dai.node.XLinkIn)
+    configIn = pipeline.create(dai.node.XLinkIn)
+    stillMjpegOut = pipeline.create(dai.node.XLinkOut)
+    
+    manip = pipeline.create(dai.node.ImageManip)
+
+    # Set stream names
+    xoutVideo.setStreamName("video")
+    controlIn.setStreamName('control')
+    configIn.setStreamName('config')
+    stillMjpegOut.setStreamName('still')
+
+    # Properties
+    camRgb.setBoardSocket(dai.CameraBoardSocket.CAM_A)
+    camRgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
+    camRgb.setStillSize(1920, 1080) 
+    camRgb.setPreviewSize(640, 360)  
+    
+
+    stillEncoder.setDefaultProfilePreset(1, dai.VideoEncoderProperties.Profile.MJPEG)
+
+    xoutVideo.input.setBlocking(False)
+    xoutVideo.input.setQueueSize(1)
+
+    # Linking
+    camRgb.preview.link(xoutVideo.input)
+    camRgb.still.link(stillEncoder.input)
+    controlIn.out.link(camRgb.inputControl)
+    configIn.out.link(camRgb.inputConfig)
+    stillEncoder.bitstream.link(stillMjpegOut.input)
+    
+    return pipeline    
+
+# camera things
+pictures_1 = 1
+pictures_2 = 1
+capture = False
+last_time = time.time()
+devices = [None,None]
+videos = [None, None]
+controlQueues = [None, None]
+configQueues = [None, None]
+stillQueues = [None, None]
+
+
+# camera settings
+poll_time = 0.2 # timer for capturing images. in seconds.
+expTime = 3500
+sensIso = 3000 
+EXP_STEP = 500  # us
+ISO_STEP = 50
+
+#---Loop---#
+while 1:
+
+    # # show camera stream
+    # for index, device in enumerate(devices):
+    #     if device != None:
+    #         videoIn = videos[index].get()
+    #         frame = videoIn.getCvFrame()
+    #         frame = cv2.rotate(frame, cv2.ROTATE_180)
+        
+    #         cv2.imshow("video " + str(index+1), frame)
+            
+        
+    # show blank image for keystrokes
+    if devices[0] == None and devices[1] == None:
+        frame = np.ones([512,512,1],dtype=np.uint8)
+        cv2.imshow("video", frame)
+
+
+    # saves images every poll_time seconds
+    if capture == True:
+            # If poll_time has passed
+            if devices[0] == None or devices[1] == None:
+                pass
+            else:
+                if time.time() - last_time > poll_time:
+                    ctrl = dai.CameraControl()
+                    ctrl.setCaptureStill(True)
+                    
+                    # take both pictures
+                    controlQueues[0].send(ctrl)
+                    controlQueues[1].send(ctrl)
+            
+                    # save picture one
+                    stillFrames = stillQueues[0].tryGetAll()
+                    for stillFrame in stillFrames:
+                        
+                        # Read in frame to numpy array and rotate it
+                        frame_1 = cv2.imdecode(stillFrame.getData(), cv2.IMREAD_UNCHANGED)
+                        frame_1 = cv2.rotate(frame_1, cv2.ROTATE_180)
+                                                
+                        # write file to folder
+                        file_name = "picture" + str(1) + "_" + str(pictures_1) + ".png"
+                        status = cv2.imwrite("pictures/" + folder_name + "/" + file_name, frame_1)                        
+                        
+                        pictures_1 += 1
+                    
+                    # save picture two
+                    stillFrames = stillQueues[1].tryGetAll()
+                    for stillFrame in stillFrames:
+                        
+                        frame_2 = cv2.imdecode(stillFrame.getData(), cv2.IMREAD_UNCHANGED)
+                        frame_2 = cv2.rotate(frame_2, cv2.ROTATE_180)
+                        
+                        
+                        # write file to folder
+                        file_name = "picture" + str(2) + "_" + str(pictures_2) + ".png"
+                        status = cv2.imwrite("pictures/" + folder_name + "/" + file_name, frame_2)                        
+                        
+                        pictures_2 += 1
+                        
+                    frame = np.concatenate((frame_1, frame_2), axis=0)
+                    cv2.imshow("video", frame)
+                    print("pictures taken: " + str(pictures_1*2))
+                    last_time = time.time()
+                            
+               
+            
+    # take in keyboard input
+    key = cv2.waitKey(1)
+    
+    # add OAK1
+    if key == ord('g'):
+        print("\nattempting OAK1 connection")
+        attempts = 1
+        device_info = dai.DeviceInfo("169.254.1.222")
+        while attempts <= 20:
+            print("\nattempt: " + str(attempts))
+            try:
+                devices[0] = dai.Device(device_info)
+                attempts = 30
+            except Exception as e:
+                attempts += 1
+                print(e)
+        if attempts == 30:
+            print("Connected to OAK 1")
+
+            pipeline = create_pipeline()
+            devices[0].startPipeline(pipeline)
+            
+            videos[0] = devices[0].getOutputQueue(name="video", maxSize=1, blocking=False)
+            controlQueues[0] = devices[0].getInputQueue('control')
+            configQueues[0] = devices[0].getInputQueue('config')
+            stillQueues[0] = devices[0].getOutputQueue('still')
+            
+            ctrl = dai.CameraControl()
+            ctrl.setCaptureStill(True)
+            
+            # take both pictures
+            controlQueues[0].send(ctrl)
+            stillFrames = stillQueues[0].tryGetAll()
+            for stillFrame in stillFrames:
+                
+                # Read in frame to numpy array and rotate it
+                frame_1 = cv2.imdecode(stillFrame.getData(), cv2.IMREAD_UNCHANGED)
+                frame_1 = cv2.rotate(frame_1, cv2.ROTATE_180)
+                cv2.imshow("video", frame_1)
+                
+                        
+        else:
+            print("try connecting later")       
+        
+    # add OAK2
+    elif key == ord('h'):
+        print("\nattempting OAK2 connection")
+        attempts = 1
+        device_info = dai.DeviceInfo("169.254.1.221")
+        while attempts <= 20:
+            print("\nattempt: " + str(attempts))
+            try:
+                devices[1] = dai.Device(device_info)
+                attempts = 30
+            except Exception as e:
+                attempts += 1
+                print(e)
+        if attempts == 30:
+            print("Connected to OAK 2")
+            
+            pipeline = create_pipeline()
+            devices[1].startPipeline(pipeline)
+            
+            videos[1] = devices[1].getOutputQueue(name="video", maxSize=1, blocking=False)
+            controlQueues[1] = devices[1].getInputQueue('control')
+            configQueues[1] = devices[1].getInputQueue('config')
+            stillQueues[1] = devices[1].getOutputQueue('still')
+            
+            ctrl = dai.CameraControl()
+            ctrl.setCaptureStill(True)
+            
+            # take both pictures
+            controlQueues[1].send(ctrl)
+            stillFrames = stillQueues[1].tryGetAll()
+            for stillFrame in stillFrames:
+                
+                # Read in frame to numpy array and rotate it
+                frame_2 = cv2.imdecode(stillFrame.getData(), cv2.IMREAD_UNCHANGED)
+                frame_2 = cv2.rotate(frame_2, cv2.ROTATE_180)
+                cv2.imshow("video", frame_2)
+                        
+        else:
+            print("try connecting later")
+    
+    # start saving images
+    elif key == ord('c'):
+        
+        if capture == True:
+            print("Finished capturing")
+            capture = False
+            
+        elif capture == False:
+            capture = True
+            pictures = 1
+                            
+            repeat = True
+            while repeat == True:
+                folder_name = input("Write to Folder: ")
+                if not os.path.exists("pictures"):
+                    os.mkdir("pictures")
+                exists = os.path.exists("pictures/" + folder_name)
+                if exists:
+                    print("This folder already exists")
+                else:
+                    repeat = False
+            os.mkdir("pictures/" + folder_name)
+            
+            
+    # stop program
+    elif key == ord('q'):
+        
+        cv2.destroyAllWindows()
+        for device in devices:
+            if device != None:
+                device.close()
+        
+        break
