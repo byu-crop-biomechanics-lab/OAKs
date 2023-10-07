@@ -268,12 +268,14 @@ while 1:
         ctrl = dai.CameraControl()
         ctrl.setManualExposure(expTime, sensIso)
         controlQueues[0].send(ctrl)
+        controlQueues[1].send(ctrl)
     
     elif key == ord('m'):
         print("Setting manual exposure, time: ", expTime, "iso: ", sensIso)
         ctrl = dai.CameraControl()
         ctrl.setManualExposure(expTime, sensIso)
         controlQueues[0].send(ctrl)
+        controlQueues[1].send(ctrl)
         
     elif key == ord('a'):
         if devices[0] != None and devices[1] != None:
