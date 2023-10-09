@@ -77,6 +77,8 @@ stillQueues = [None, None]
 
 # camera settings
 poll_time = 0.2 # timer for capturing images. in seconds.
+poll_timeStep = 0.1
+
 expTime = 3500
 sensIso = 3000 
 EXP_STEP = 500  # us
@@ -256,7 +258,8 @@ while 1:
                 else:
                     repeat = False
             os.mkdir("pictures/" + folder_name)
-            
+    
+    # Camera control options
     elif key in [ord('i'), ord('o'), ord('k'), ord('l')]:
         if key == ord('i'): expTime -= EXP_STEP
         if key == ord('o'): expTime += EXP_STEP
@@ -284,6 +287,13 @@ while 1:
             print("Auto")
         else:
             print("two not connected")  
+            
+    elif key in [ord('r'), ord('t')]:
+        if key == ord('r'): 
+            poll_time -= poll_timeStep
+        if key == ord('t'):
+            poll_time += poll_timeStep
+        print("Time between pictures: " + str(poll_time)) + " pictures/second"
             
     # stop program
     elif key == ord('q'):
