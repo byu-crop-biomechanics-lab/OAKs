@@ -12,6 +12,7 @@ To Do
 import cv2
 import depthai as dai
 import time
+import datetime
 import numpy as np
 import os
 
@@ -124,7 +125,8 @@ while 1:
                         frame_1 = cv2.rotate(frame_1, cv2.ROTATE_180)
                                                 
                         # write file to folder
-                        file_name = "picture" + str(1) + "_" + str(pictures_1) + ".png"
+                        now_string = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")[:-4]
+                        file_name = "camera" + str(1) + "_" + now_string + ".png"
                         status = cv2.imwrite("pictures/" + folder_name + "/" + file_name, frame_1)                        
                         
                         pictures_1 += 1
@@ -138,7 +140,7 @@ while 1:
                         
                         
                         # write file to folder
-                        file_name = "picture" + str(2) + "_" + str(pictures_2) + ".png"
+                        file_name = "camera" + str(2) + "_" + now_string + ".png"
                         status = cv2.imwrite("pictures/" + folder_name + "/" + file_name, frame_2)                        
                         
                         pictures_2 += 1
